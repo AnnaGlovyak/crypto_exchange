@@ -4,15 +4,17 @@
       <h1 class="text-4xl font-light sm:text-6xl text-gray-darkest">Crypto Exchange</h1>
       <span class="text-xl font-normal text-gray-darkest pt-4">Exchange fast and easy</span>
       <div class="flex flex-col sm:flex-row justify-between items-center pt-14">
-        <div class="left-currency w-full relative mt-4 sm:max-w-440 sm:mt-0">
+        <div class="left-currency box-border w-full relative mt-4 sm:max-w-440 sm:mt-0">
           <input type="text" :placeholder="minAmount" v-model="sum" class="box-border rounded w-full h-xl bg-gray-lighter border border-gray-light pl-4 focus:outline-none">
-          <model-list-select class="absolute top-0 right-0"
-            :list="currency"
-            option-value="name"
-            :custom-text="createCustomText"
-            v-model="selectedCurrencyLeft"
-            :placeholder="selectedCurrencyLeft.ticker">
-          </model-list-select>
+          <v-select class="style-chooser" :filter="fuseSearch" :options="currency" :get-option-label="(option) => option.ticker" :placeholder="selectedCurrencyLeft.ticker" v-model="selectedCurrencyLeft">
+            <template v-slot:option="option">
+              <div class="select-option">
+                <img :class="option.icon" class="icon" :src="option.image">
+                <div class="select-option__ticker">{{ option.ticker }}</div>
+                <div class="select-option__name"> {{ option.name }} </div>
+              </div>
+            </template>
+          </v-select>
         </div>
         <svg class="self-end sm:self-center mt-4 sm:mt-0 " width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M7.99 17H20V19H7.99V22L4 18L7.99 14V17Z" fill="#11B3FE"/>
@@ -20,13 +22,15 @@
         </svg>
         <div class="right-currency w-full mt-4 sm:max-w-440 sm:mt-0 sm:m-0 relative">
           <input type="text" name="" id=""  :value="finalPrice" placeholder="" class="box-border rounded w-full h-xl bg-gray-lighter border border-gray-light pl-4 focus:outline-none">
-          <model-list-select class="absolute top-0 right-0"
-            :list="currency"
-            option-value="name"
-            :custom-text="createCustomText"
-            v-model="selectedCurrencyRight"
-            :placeholder="selectedCurrencyRight.ticker">
-          </model-list-select>
+          <v-select class="style-chooser" :filter="fuseSearch" :options="currency" :get-option-label="(option) => option.ticker" :placeholder="selectedCurrencyRight.ticker" v-model="selectedCurrencyRight">
+            <template v-slot:option="option">
+              <div class="select-option">
+                <img :class="option.icon" class="icon" :src="option.image">
+                <div class="select-option__ticker">{{ option.ticker }}</div>
+                <div class="select-option__name"> {{ option.name }} </div>
+              </div>
+            </template>
+          </v-select>
         </div>
       </div>
       <label class="text-base font-normal text-gray-darkest pt-8 pb-2">Your Ethereum address</label>
@@ -44,11 +48,32 @@
 <script>
 import { ModelListSelect  } from 'vue-search-select'
 import axios from 'axios'
+import vSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css'
+
+
+vSelect.props.components.default = () => ({
+  OpenIndicator: 
+  {
+    render: createElement => createElement("span", {
+      class: 'my-arrow'
+    }, [
+      createElement('span', {
+        class: 'my-span-arrow-left'
+      }),
+      createElement('span', {
+        class: 'my-span-arrow-right'
+      })
+    ]),
+  },
+});
+import Fuse from 'fuse.js'
 
 export default {
   name: 'App',
   components: {
     ModelListSelect ,
+    vSelect
   },
   data(){
     return {
@@ -59,6 +84,7 @@ export default {
       minAmount: '',
       estimatedAmount: '',
       sum: null,
+      name: ''
     }
   },
   async created(){
@@ -152,8 +178,19 @@ export default {
         })
         .catch(error => console.log(error))
     },
+    fuseSearch(options, search) {
+      const fuse = new Fuse(options, {
+        keys: ['ticker', 'name'],
+        shouldSort: true,
+      })
+      return search.length
+        ? fuse.search(search).map(({ item }) => item)
+        : fuse.list
+    },
   }
 }
 </script>
 
-<style src="./assets/tailwind.css"/>
+<style src="./assets/tailwind.css">
+    
+</style>
